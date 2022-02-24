@@ -5,10 +5,12 @@
 #define _EZTIME_H_
 
 //Sets the language for the names of Months and Days. See the src/lang directory for supported languages
+#ifndef EZTIME_LANGUAGE
 #define EZTIME_LANGUAGE EN
+#endif
 
-// Compiles in NTP updating, timezoned fetching and caching 
-#define EZTIME_NETWORK_ENABLE
+// Compiles in NTP updating, timezoned fetching and caching
+// #define EZTIME_NETWORK_ENABLE
 
 // Arduino Ethernet shields
 // #define EZTIME_ETHERNET
@@ -23,8 +25,9 @@
 // #define EZTIME_MAX_DEBUGLEVEL_INFO
 
 // Cache mechanism, either EEPROM or NVS, not both. (See README)
+#ifndef EZTIME_CACHE_NVS
 #define EZTIME_CACHE_EEPROM
-// #define EZTIME_CACHE_NVS
+#endif
 
 // Uncomment if you want to access ezTime functions only after "ezt."
 // (to avoid naming conflicts in bigger projects, e.g.) 
@@ -202,6 +205,7 @@ namespace ezt {
 		bool queryNTP(const String server, time_t &t, unsigned long &measured_at);
 		void setInterval(const uint16_t seconds = 0);
 		void setServer(const String ntp_server = NTP_SERVER);
+		void setTimezoneServer(const String timezone_server = TIMEZONED_REMOTE_HOST, const uint16_t timezone_port = TIMEZONED_REMOTE_PORT);
 		void updateNTP();
 		bool waitForSync(const uint16_t timeout = 0);
 		time_t lastNtpUpdateTime();

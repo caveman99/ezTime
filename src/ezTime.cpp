@@ -79,6 +79,8 @@ namespace {
 	#ifdef EZTIME_NETWORK_ENABLE
 		uint16_t _ntp_interval = NTP_INTERVAL;
 		String _ntp_server = NTP_SERVER;
+		String _timezone_server = TIMEZONED_REMOTE_HOST;
+		uint16_t _timezone_port = TIMEZONED_REMOTE_PORT;
 	#endif
 
 	void triggerError(const ezError_t err) {
@@ -391,9 +393,9 @@ namespace ezt {
 					} else {
 						info(String(abs(correction)));
 						if (correction > 0) {
-							infoln(F(" ms fast)"));
-						} else {
 							infoln(F(" ms slow)"));
+						} else {
+							infoln(F(" ms fast)"));
 						}
 					}
 				} else {
@@ -517,6 +519,11 @@ namespace ezt {
 		}
 
 		void setServer(const String ntp_server /* = NTP_SERVER */) { _ntp_server = ntp_server; }
+
+		void setTimezoneServer(const String timezone_server /* = TIMEZONED_REMOTE_HOST */, const uint16_t timezone_port /* = TIMEZONED_REMOTE_PORT */) {
+			_timezone_server = timezone_server;
+			_timezone_port = timezone_port;
+		}
 
 		bool waitForSync(const uint16_t timeout /* = 0 */) {
 
@@ -818,7 +825,7 @@ String Timezone::getPosix() { return _posix; }
 		udp.flush();
 		udp.begin(TIMEZONED_LOCAL_PORT);
 		unsigned long started = millis();
-		udp.beginPacket(TIMEZONED_REMOTE_HOST, TIMEZONED_REMOTE_PORT);
+		udp.beginPacket(_timezone_server.c_str(), _timezone_port);
 		udp.write((const uint8_t*)location.c_str(), location.length());
 		udp.endPacket();
 		
@@ -841,7 +848,7 @@ String Timezone::getPosix() { return _posix; }
 		info(F(" ms)  "));
 		if (recv.substring(0,6) == "ERROR ") {
 			_server_error = recv.substring(6);
-			error (SERVER_ERROR);
+			ezt::error(SERVER_ERROR);
 			return false;
 		}
 		if (recv.substring(0,3) == "OK ") {
@@ -856,7 +863,7 @@ String Timezone::getPosix() { return _posix; }
 			#endif
 			return true;
 		}
-		error (DATA_NOT_FOUND);
+		ezt::error(DATA_NOT_FOUND);
 		return false;
 	}
 	
@@ -919,6 +926,7 @@ String Timezone::getPosix() { return _posix; }
 		void Timezone::clearCache(const bool delete_section /* = false */) {
 		
 			#ifdef EZTIME_CACHE_EEPROM
+			    (void)delete_section; // UNUSED_PARAMETER(delete_section);
 				eepromBegin();
 				if (_eeprom_address < 0) { triggerError(NO_CACHE_SET); return; }
 				for (int16_t n = _eeprom_address; n < _eeprom_address + EEPROM_CACHE_LEN; n++) EEPROM.write(n, 0);
